@@ -5,11 +5,45 @@ import imageio
 import skimage.transform
 
 import colmap_read_model as read_model
+from tqdm import tqdm
 
 def save_views(realdir,names):
     with open(os.path.join(realdir,'view_imgs.txt'), mode='w') as f:
         f.writelines('\n'.join(names))
     f.close()
+
+def calculate_zvals_in_chunks(poses, pts_arr, chunk_size=1000):
+    # 포즈 배열에서 카메라 위치 (3번째 열)과 z 방향 (2번째 행) 추출
+    camera_positions = poses[:, 3, :]  # 카메라 위치 (3, num_poses)
+    z_directions = poses[:, 2, :]  # z 방향 벡터 (3, num_poses)
+
+    pts_arr = pts_arr.transpose([1, 0])
+    num_points = pts_arr.shape[1]
+    num_poses = poses.shape[2]
+    zvals_full = np.zeros((num_points, num_poses))
+
+    # 포인트 배열을 청크로 나누어 처리
+    for start in tqdm(range(0, num_points, chunk_size), desc="Processing chunks"):
+        end = min(start + chunk_size, num_points)
+        pts_chunk = pts_arr[:, start:end]  # (3, chunk_size)
+        #print('pts_chunk shape: (3, chunk_size) -> ', pts_chunk.shape)
+
+        # 브로드캐스팅을 위해 배열 차원 조정
+        pts_chunk_expanded = pts_chunk[:, :, np.newaxis]  # (3, chunk_size, 1)
+        camera_positions_expanded = camera_positions[:, np.newaxis, :]  # (3, 1, num_poses)
+        z_directions_expanded = z_directions[:, np.newaxis, :]  # (3, 1, num_poses)
+        #print('z_direction_expanded shape: (3, 1, num_poses) -> ', z_directions_expanded.shape)
+
+        # 각 포인트에서 각 카메라 위치까지의 차이 계산
+        diffs = pts_chunk_expanded - camera_positions_expanded  # (3, chunk_size, num_poses)
+        #print('diffs shape: (3, chunk_size, num_poses) -> ', diffs.shape)
+
+        # zvals 계산: 차이 벡터와 z 방향 벡터의 내적
+        zvals_chunk = np.sum(-diffs * z_directions_expanded, axis=0)  # (chunk_size, num_poses)
+        #print('zvals_chunk: (chunk-size, num_poses) -> ', zvals_chunk.shape)
+        zvals_full[start:end, :] = zvals_chunk
+
+    return zvals_full
 
 
 def load_save_pose(realdir, modeldir):
@@ -79,7 +113,16 @@ def load_save_pose(realdir, modeldir):
     pts_arr = np.array(pts_arr)
     vis_arr = np.array(vis_arr)
     print( 'Points', pts_arr.shape, 'Visibility', vis_arr.shape)
-    zvals = np.sum(-(pts_arr[:, np.newaxis, :].transpose([2,0,1]) - poses[:3, 3:4, :]) * poses[:3, 2:3, :], 0)
+    print('poses shape: ', poses.shape)
+    print('pts_arr[:, np.newaxis, :] shape: ', pts_arr[:, np.newaxis, :].shape)
+    print('pts_arr[:, np.newaxis, :].transpose([2, 0, 1]) shape: ', pts_arr[:, np.newaxis, :].transpose([2, 0, 1]).shape)
+    print('poses[:3, 3:4, :] shape: ', poses[:3, 3:4, :].shape)
+    print('poses[:3, 2:3, :] shape: ', poses[:3, 2:3, :].shape)
+
+    #zvals = np.sum(-(pts_arr[:, np.newaxis, :].transpose([2,0,1]) - poses[:3, 3:4, :]) * poses[:3, 2:3, :], 0)
+    zvals = calculate_zvals_in_chunks(poses, pts_arr, 10000)
+    print('zvals shape: ', zvals.shape)
+
     valid_z = zvals[vis_arr==1]
     print( 'Depth stats', valid_z.min(), valid_z.max(), valid_z.mean() )
     
@@ -94,7 +137,6 @@ def load_save_pose(realdir, modeldir):
     save_arr = np.array(save_arr)
     
     np.save(os.path.join(realdir, 'poses_bounds.npy'), save_arr)
-    
 
 
 def load_colmap_data(realdir, modeldir):
