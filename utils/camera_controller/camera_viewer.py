@@ -138,10 +138,14 @@ class CameraViewer:
 
     def apply_rotation(self, yaw=0, pitch=0):
         yaw, pitch = torch.deg2rad(yaw), torch.deg2rad(pitch)
+        # R_pitch = torch.tensor([
+        #     [1, 0, 0],
+        #     [0, torch.cos(pitch), torch.sin(pitch)],
+        #     [0, -torch.sin(pitch), torch.cos(pitch)],
         R_pitch = torch.tensor([
             [1, 0, 0],
-            [0, torch.cos(pitch), torch.sin(pitch)],
-            [0, -torch.sin(pitch), torch.cos(pitch)],
+            [0, torch.cos(pitch), -torch.sin(pitch)],
+            [0, torch.sin(pitch), torch.cos(pitch)]
         ], dtype=torch.float32)
         R_yaw = torch.tensor([
             [torch.cos(yaw),   0,  torch.sin(yaw) ],
