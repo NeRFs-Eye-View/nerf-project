@@ -78,7 +78,8 @@ def load_save_pose(realdir, modeldir):
     sort_names = [names[i] for i in perm]
     save_views(realdir,sort_names)
 
-    for k in imdata:
+    for k in tqdm(imdata, desc="Save w2c matrix"):
+    # for k in imdata:
         im = imdata[k]
         R = im.qvec2rotmat()
         t = im.tvec.reshape([3,1])
@@ -100,7 +101,8 @@ def load_save_pose(realdir, modeldir):
     # save pose
     pts_arr = []
     vis_arr = []
-    for k in pts3d:
+    for k in tqdm(pts3d, desc="Save Poses"):
+    #for k in pts3d:
         pts_arr.append(pts3d[k].xyz)
         cams = [0] * poses.shape[-1]
         for ind in pts3d[k].image_ids:
@@ -127,7 +129,8 @@ def load_save_pose(realdir, modeldir):
     print( 'Depth stats', valid_z.min(), valid_z.max(), valid_z.mean() )
     
     save_arr = []
-    for i in perm:
+    for i in tqdm(perm, desc="Save poses bounds.npy"):
+    # for i in perm:
         vis = vis_arr[:, i]
         zs = zvals[:, i]
         zs = zs[vis==1]
