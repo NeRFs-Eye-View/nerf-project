@@ -34,21 +34,22 @@ echo -n "Please enter the combination number you want to execute: "
 read combination_number
 
 # 필요한 패키지 다운로드(apt)
-#apt install -y zip unzip imagemagick git
+apt install -y zip unzip imagemagick git
+echo -e '2\n133\n' apt install -y libopencv-dev python3-opencv
 
 # 필요한 패키지 다운로드(pip)
-#pip install gdown tqdm torch
+pip install gdown tqdm torch
 
 ###############################################################################
 #                                  Set Variables                              #
 ###############################################################################
 
-video_fovs=("wide", "normal", "record3d")
+video_fovs=("wide" "normal" "record3d")
 
 declare -A gdrive_ids
-gdrive_ids["${video_fovs[0]}"]=""  # set id in google-drive url for video
-gdrive_ids["${video_fovs[1]}"]=""
-gdrive_ids["${video_fovs[2]}"]=""
+gdrive_ids["wide"]="1dPblORqwimPgy-a8OFOeGfiYU79ArDNd"  # set id in google-drive url for video
+gdrive_ids["normal"]=""
+gdrive_ids["record3d"]=""
 
 ###############################################################################
 #                                Define Functions                             #
@@ -64,15 +65,22 @@ function execute_combination() {
 	local workdir="$basedir/$session_name"
 	local is_hierarchical=$4
 
+	echo session_name: $session_name
+	echo fov: $fov
+	echo gdrive_id: $gdrive_id
+	echo fps: $fps
+	echo basedir: $basedir
+	echo workdir: $workdir
+	echo is_hierarchical: $is_hierarchical
+
 	##############################################################
 	#                         Preprocess                         #
 	##############################################################
-	# local preprocess_session_name="${session_name}_preprocess"
-	# tmux new-session -d -s "$preprocess_session_name"
+
 	tmux new-session -d -s "$session_name"
 
     # 명령어 로깅
-    tmux pipe-pane -t "$session_name" "cat > $workdir/${session_name}.log"
+    tmux pipe-pane -t "$session_name" "cat > ${workdir}/${session_name}.log"
 
 	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
 	echo "You can attach to this session with 'tmux attach -t $session_name'."
@@ -81,8 +89,10 @@ function execute_combination() {
     tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
+    tmux send-keys -t "$session_name" "mkdir -p $workdir/images" C-m
     tmux send-keys -t "$session_name" "gdown ${gdrive_id}" C-m
     tmux send-keys -t "$session_name" "unzip $fov" C-m
+    tmux send-keys -t "$session_name" "alias python=python3" C-m
     tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/${fov}/*" C-m
 
 	# Record3D는 COLMAP와 LLFF 수행 X
@@ -93,13 +103,6 @@ function execute_combination() {
 	##############################################################
 	#                           COLMAP                           #
 	##############################################################
-	# local colmap_session_name="${session_name}_colmap"
-
-	# tmux new-session -d -s "$colmap_session_name"
-    # tmux pipe-pane -t "$session_name" "cat > $workdir/${session_name}.log"
-
-	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
-	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
 	# prepare
     tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
@@ -132,12 +135,6 @@ function execute_combination() {
 	##############################################################
 	#                            LLFF                            #
 	##############################################################
-	# local llff_session_name="${session_name}_llff"
-
-	# tmux new-session -d -s "$llff_session_name"
-    # tmux pipe-pane -t "$llff_session_name" "cat > $workdir/${llff_session_name}.log"
-	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
-	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
 	# prepare
     tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
