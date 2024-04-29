@@ -43,12 +43,12 @@ read combination_number
 #                                  Set Variables                              #
 ###############################################################################
 
-video_fovs={"wide", "normal", "record3d"}
+video_fovs=("wide", "normal", "record3d")
 
 declare -A gdrive_ids
-gdrive_ids[${video_fovs[0]}]=""  # set id in google-drive url for video
-gdrive_ids[${video_fovs[1]}]=""
-gdrive_ids[${video_fovs[2]}]=""
+gdrive_ids["${video_fovs[0]}"]=""  # set id in google-drive url for video
+gdrive_ids["${video_fovs[1]}"]=""
+gdrive_ids["${video_fovs[2]}"]=""
 
 ###############################################################################
 #                                Define Functions                             #
@@ -58,7 +58,7 @@ function execute_combination() {
 	# execute_combination <combination number> <fov> <fps> <COLMAP command>
 	local session_name="Comb_$1"
 	local fov=$2
-	local gdrive_id=${drive_ids[${fov}]}
+	local gdrive_id=${gdrive_ids[${fov}]}
 	local fps=$3
 	local basedir="/root"
 	local workdir="$basedir/$session_name"
