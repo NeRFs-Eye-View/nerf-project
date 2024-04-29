@@ -35,7 +35,7 @@ read combination_number
 
 # 필요한 패키지 다운로드(apt)
 apt install -y zip unzip imagemagick git
-echo -e '2\n133\n' apt install -y libopencv-dev python3-opencv
+DEBIAN_FRONTEND="noninteractive" apt install -y libopencv-dev python3-opencv
 
 # 필요한 패키지 다운로드(pip)
 pip install gdown tqdm torch
