@@ -90,10 +90,14 @@ function execute_combination() {
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
     tmux send-keys -t "$session_name" "mkdir -p $workdir/images" C-m
+    tmux send-keys -t "$session_name" "mkdir -p $workdir/videos" C-m
     tmux send-keys -t "$session_name" "gdown ${gdrive_id}" C-m
-    tmux send-keys -t "$session_name" "unzip $fov" C-m
+    tmux send-keys -t "$session_name" "unzip $fov -d $workdir/videos" C-m
+    tmux send-keys -t "$session_name" "subfolder=$(find "$workdir" -mindepth 1 -maxdepth 1 -type d)" C-m
+    tmux send-keys -t "$session_name" "mv $subfolder/* $workdir/videos" C-m
+    tmux send-keys -t "$session_name" "rm -rf $subfolder" C-m
     tmux send-keys -t "$session_name" "alias python=python3" C-m
-    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/${fov}/*" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/videos/*" C-m
 
 	# Record3D는 COLMAP와 LLFF 수행 X
 	if [[ $session_name -gt 12 ]]; then
@@ -138,8 +142,7 @@ function execute_combination() {
 	directory=$workdir/sparse
 
 	# prepare
-	largest_folder=$(find "$directory" -mindepth 2 -type d -exec du -sh {} + | sort -rh | tee >(head -n 1 | cut -f2))
-	# largest_file=$(find "$directory" -type f -exec du -h {} + | sort -rh | tee >(cat 1>&2) | head -n 1 | cut -f2)
+	largest_folder=$(find "$directory" -mindepth 1 -type d -exec du -sh {} + | sort -rh | tee >(head -n 1 | cut -f2))
 
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "cd $workdir" C-m
