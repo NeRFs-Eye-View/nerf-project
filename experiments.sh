@@ -67,22 +67,23 @@ function execute_combination() {
 	##############################################################
 	#                         Preprocess                         #
 	##############################################################
-	local preprocess_session_name="${session_name}_preprocess"
-	tmux new-session -d -s "$preprocess_session_name"
+	# local preprocess_session_name="${session_name}_preprocess"
+	# tmux new-session -d -s "$preprocess_session_name"
+	tmux new-session -d -s "$session_name"
 
     # 명령어 로깅
-    tmux pipe-pane -t "$preprocess_session_name" "cat > $workdir/${preprocess_session_name}.log"
+    tmux pipe-pane -t "$session_name" "cat > $workdir/${session_name}.log"
 
-	echo "Session $preprocess_session_name has started. Output is being logged to ${preprocess_session_name}.log"
-	echo "You can attach to this session with 'tmux attach -t $preprocess_session_name'."
+	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
+	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
     # tmux 세션에 명령어 전송
-    tmux send-keys -t "$preprocess_session_name" "echo Running combination $session_name" C-m
-    tmux send-keys -t "$preprocess_session_name" "sleep 2" C-m
-    tmux send-keys -t "$preprocess_session_name" "mkdir -p $workdir && cd $workdir" C-m
-    tmux send-keys -t "$preprocess_session_name" "gdown ${gdrive_id}" C-m
-    tmux send-keys -t "$preprocess_session_name" "unzip $fov" C-m
-    tmux send-keys -t "$preprocess_session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/${fov}/*" C-m
+    tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
+    tmux send-keys -t "$session_name" "sleep 2" C-m
+    tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
+    tmux send-keys -t "$session_name" "gdown ${gdrive_id}" C-m
+    tmux send-keys -t "$session_name" "unzip $fov" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/${fov}/*" C-m
 
 	# Record3D는 COLMAP와 LLFF 수행 X
 	if [[ $session_name -gt 12 ]]; then
@@ -92,23 +93,23 @@ function execute_combination() {
 	##############################################################
 	#                           COLMAP                           #
 	##############################################################
-	local colmap_session_name="${session_name}_colmap"
+	# local colmap_session_name="${session_name}_colmap"
 
-	tmux new-session -d -s "$colmap_session_name"
-    tmux pipe-pane -t "$colmap_session_name" "cat > $workdir/${colmap_session_name}.log"
+	# tmux new-session -d -s "$colmap_session_name"
+    # tmux pipe-pane -t "$session_name" "cat > $workdir/${session_name}.log"
 
-	echo "Session $colmap_session_name has started. Output is being logged to ${colmap_session_name}.log"
-	echo "You can attach to this session with 'tmux attach -t $colmap_session_name'."
+	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
+	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
 	# prepare
-    tmux send-keys -t "$colmap_session_name" "echo Running combination $session_name" C-m
-    tmux send-keys -t "$colmap_session_name" "sleep 2" C-m
-    tmux send-keys -t "$colmap_session_name" "cd $workdir" C-m
-    tmux send-keys -t "$colmap_session_name" "bash $basedir/nerf-project/utils/colmap/download_vocab_tree.sh" C-m
-    tmux send-keys -t "$colmap_session_name" "mv $workdir/vocab_tree/*.bin $workdir" C-m
+    tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
+    tmux send-keys -t "$session_name" "sleep 2" C-m
+    tmux send-keys -t "$session_name" "cd $workdir" C-m
+    tmux send-keys -t "$session_name" "bash $basedir/nerf-project/utils/colmap/download_vocab_tree.sh" C-m
+    tmux send-keys -t "$session_name" "mv $workdir/vocab_tree/*.bin $workdir" C-m
 
 	# feature_extractor
-    tmux send-keys -t "$colmap_session_name" "colmap feature_extractor --database_path ./database.db --image_path ./images" C-m
+    tmux send-keys -t "$session_name" "colmap feature_extractor --database_path ./database.db --image_path ./images" C-m
 
 	# feature matcher
 	local image_num=$(ls $workdir/images | wc -l)
@@ -117,33 +118,33 @@ function execute_combination() {
 	else
 		vocab_tree_bin='vocab_tree_flickr100K_words1M.bin'
 	fi
-    tmux send-keys -t "$colmap_session_name" "colmap vocab_tree_matcher --database_path ./database.db --VocabTreeMatching.vocab_tree_path $vocab_tree_bin --SiftMatching.use_gpu 1" C-m
+    tmux send-keys -t "$session_name" "colmap vocab_tree_matcher --database_path ./database.db --VocabTreeMatching.vocab_tree_path $vocab_tree_bin --SiftMatching.use_gpu 1" C-m
 
 	# mapper
-    tmux send-keys -t "$colmap_session_name" "mkdir -p $workdir/sparse" C-m
+    tmux send-keys -t "$session_name" "mkdir -p $workdir/sparse" C-m
 	if [[ $is_hierarchical -eq 0 ]]; then
-		tmux send-keys -t "$colmap_session_name" "colmap mapper --database_path ./database.db --image_path ./images --output_path ./sparse --Mapper.ba_global_function_tolerance=0.000001" C-m
+		tmux send-keys -t "$session_name" "colmap mapper --database_path ./database.db --image_path ./images --output_path ./sparse --Mapper.ba_global_function_tolerance=0.000001" C-m
 	else
-		tmux send-keys -t "$colmap_session_name" "colmap hierarchical_mapper --database_path ./database.db --image_path ./images --output_path ./sparse --image_overlap 100" C-m
+		tmux send-keys -t "$session_name" "colmap hierarchical_mapper --database_path ./database.db --image_path ./images --output_path ./sparse --image_overlap 100" C-m
 	fi
 
 
 	##############################################################
 	#                            LLFF                            #
 	##############################################################
-	local llff_session_name="${session_name}_llff"
+	# local llff_session_name="${session_name}_llff"
 
-	tmux new-session -d -s "$llff_session_name"
-    tmux pipe-pane -t "$llff_session_name" "cat > $workdir/${llff_session_name}.log"
-	echo "Session $llff_session_name has started. Output is being logged to ${llff_session_name}.log"
-	echo "You can attach to this session with 'tmux attach -t $llff_session_name'."
+	# tmux new-session -d -s "$llff_session_name"
+    # tmux pipe-pane -t "$llff_session_name" "cat > $workdir/${llff_session_name}.log"
+	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
+	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
 	# prepare
-    tmux send-keys -t "$llff_session_name" "echo Running combination $session_name" C-m
-    tmux send-keys -t "$llff_session_name" "sleep 2" C-m
-    tmux send-keys -t "$llff_session_name" "cd $workdir" C-m
-    tmux send-keys -t "$llff_session_name" "pip install -r $basedir/nerf-project/utils/llff/requirements.txt" C-m
-    tmux send-keys -t "$llff_session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $workdir/ --model_path sparse/0" C-m
+    tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
+    tmux send-keys -t "$session_name" "sleep 2" C-m
+    tmux send-keys -t "$session_name" "cd $workdir" C-m
+    tmux send-keys -t "$session_name" "pip install -r $basedir/nerf-project/utils/llff/requirements.txt" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $workdir/ --model_path sparse/0" C-m
 }
 
 
