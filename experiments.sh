@@ -105,7 +105,6 @@ function execute_combination() {
 	##############################################################
 
 	# prepare
-    tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "cd $workdir" C-m
     tmux send-keys -t "$session_name" "bash $basedir/nerf-project/utils/colmap/download_vocab_tree.sh" C-m
@@ -136,12 +135,16 @@ function execute_combination() {
 	#                            LLFF                            #
 	##############################################################
 
+	directory=$workdir/sparse
+
 	# prepare
-    tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
+	largest_folder=$(find "$directory" -mindepth 2 -type d -exec du -sh {} + | sort -rh | tee >(head -n 1 | cut -f2))
+	# largest_file=$(find "$directory" -type f -exec du -h {} + | sort -rh | tee >(cat 1>&2) | head -n 1 | cut -f2)
+
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "cd $workdir" C-m
     tmux send-keys -t "$session_name" "pip install -r $basedir/nerf-project/utils/llff/requirements.txt" C-m
-    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $workdir/ --model_path sparse/0" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $workdir/ --model_path $largest_folder" C-m
 }
 
 
