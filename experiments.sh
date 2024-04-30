@@ -34,8 +34,10 @@ echo -n "Please enter the combination number you want to execute: "
 read combination_number
 
 # 필요한 패키지 다운로드(apt)
-apt install -y zip unzip imagemagick git
+apt install -y pip vim zip unzip imagemagick git ffmpeg
 DEBIAN_FRONTEND="noninteractive" apt install -y libopencv-dev python3-opencv
+
+cp /usr/bin/ffmpeg /usr/local/bin/ffmpeg
 
 # 필요한 패키지 다운로드(pip)
 pip install gdown tqdm torch
@@ -85,6 +87,35 @@ function execute_combination() {
 	echo "Session $session_name has started. Output is being logged to ${session_name}.log"
 	echo "You can attach to this session with 'tmux attach -t $session_name'."
 
+	# Record3D는 COLMAP와 LLFF 수행 X
+	if [[ $1 -gt 12 ]]; then
+	    tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
+		tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
+		tmux send-keys -t "$session_name" "alias python=python3" C-m
+		tmux send-keys -t "$session_name" "gdown --id 1sSNwwsCLPOaa8ufcX4S7y4n0fu_1Znt8" C-m
+		tmux send-keys -t "$session_name" "unzip workspace.zip" C-m
+		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas/record3d" C-m
+		tmux send-keys -t "$session_name" "gdown $gdrive_id" C-m
+		tmux send-keys -t "$session_name" "unzip $fov -d $workdir/workspace/datas/record3d" C-m
+		tmux send-keys -t "$session_name" "subfolder=$(find "$workdir/workspace/datas/record3d" -mindepth 1 -maxdepth 1 -type d)" C-m
+		tmux send-keys -t "$session_name" "apt update" C-m
+		tmux send-keys -t "$session_name" "apt install -y build-essential" C-m # gcc컴파일러 설치
+		tmux send-keys -t "$session_name" "pip install nerfstudio" C-m
+
+		# * record3d data 가공 command (max-dataset-size를 데이터 크기에 맞게 결정 이미지 60개당 약 2개 추출)
+		tmux send-keys -t "$session_name" "ns-process-data record3d --data $subfolder --output-dir $workdir/workspace/datas/ --max-dataset-size 1200" C-m
+		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas/Hierarchical-Localization/" C-m
+		tmux send-keys -t "$session_name" "pip install -r requirements.txt" C-m
+		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas" C-m #가공된 데이터 디렉토리로 이동
+
+		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$workdir/workspace/datas/Hierarchical-Localization:$PYTHONPATH\"" C-m
+		# transform.json을 sparse로 만들어주는 라이브러리들의 경로를 일시적으로 쉘에 지정
+		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$workdir/workspace/datas/:$PYTHONPATH\"" C-m
+
+		tmux send-keys -t "$session_name" "python record3d_adjust_colmap.py" C-m
+		exit 0
+	fi
+
     # tmux 세션에 명령어 전송
     tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
     tmux send-keys -t "$session_name" "sleep 2" C-m
@@ -99,10 +130,7 @@ function execute_combination() {
     tmux send-keys -t "$session_name" "alias python=python3" C-m
     tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/videos/*" C-m
 
-	# Record3D는 COLMAP와 LLFF 수행 X
-	if [[ $session_name -gt 12 ]]; then
-		exit 0
-	fi
+
 
 	##############################################################
 	#                           COLMAP                           #
