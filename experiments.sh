@@ -89,30 +89,33 @@ function execute_combination() {
 
 	# Record3D는 COLMAP와 LLFF 수행 X
 	if [[ $1 -gt 12 ]]; then
+		ns=${workdir}/workspace/datas
 	    tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
 		tmux send-keys -t "$session_name" "echo Running combination $session_name" C-m
 		tmux send-keys -t "$session_name" "alias python=python3" C-m
 		tmux send-keys -t "$session_name" "gdown --id 1sSNwwsCLPOaa8ufcX4S7y4n0fu_1Znt8" C-m
 		tmux send-keys -t "$session_name" "unzip workspace.zip" C-m
-		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas/record3d" C-m
+		tmux send-keys -t "$session_name" "cd $ns/record3d" C-m
 		tmux send-keys -t "$session_name" "gdown $gdrive_id" C-m
-		tmux send-keys -t "$session_name" "unzip $fov -d $workdir/workspace/datas/record3d" C-m
-		tmux send-keys -t "$session_name" "subfolder=$(find "$workdir/workspace/datas/record3d" -mindepth 1 -maxdepth 1 -type d)" C-m
+		tmux send-keys -t "$session_name" "unzip $fov -d $ns/record3d" C-m
+		tmux send-keys -t "$session_name" "subfolder=$(find "$ns/record3d" -mindepth 1 -maxdepth 1 -type d)" C-m
 		tmux send-keys -t "$session_name" "apt update" C-m
 		tmux send-keys -t "$session_name" "apt install -y build-essential" C-m # gcc컴파일러 설치
 		tmux send-keys -t "$session_name" "pip install nerfstudio" C-m
 
 		# * record3d data 가공 command (max-dataset-size를 데이터 크기에 맞게 결정 이미지 60개당 약 2개 추출)
-		tmux send-keys -t "$session_name" "ns-process-data record3d --data $subfolder --output-dir $workdir/workspace/datas/ --max-dataset-size 1200" C-m
-		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas/Hierarchical-Localization/" C-m
+		tmux send-keys -t "$session_name" "ns-process-data record3d --data $subfolder --output-dir $ns/ --max-dataset-size 1200" C-m
+		tmux send-keys -t "$session_name" "cd $ns/Hierarchical-Localization/" C-m
 		tmux send-keys -t "$session_name" "pip install -r requirements.txt" C-m
-		tmux send-keys -t "$session_name" "cd $workdir/workspace/datas" C-m #가공된 데이터 디렉토리로 이동
+		tmux send-keys -t "$session_name" "cd $ns" C-m #가공된 데이터 디렉토리로 이동
 
-		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$workdir/workspace/datas/Hierarchical-Localization:$PYTHONPATH\"" C-m
+		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$ns/Hierarchical-Localization:$PYTHONPATH\"" C-m
 		# transform.json을 sparse로 만들어주는 라이브러리들의 경로를 일시적으로 쉘에 지정
-		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$workdir/workspace/datas/:$PYTHONPATH\"" C-m
+		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$ns/:$PYTHONPATH\"" C-m
 
 		tmux send-keys -t "$session_name" "python record3d_adjust_colmap.py" C-m
+		tmux send-keys -t "$session_name" "python $basedir/nerf-project/llff/colmap2poses.py --project_path $ns/ --model_path comap_ba" C-m
+
 		exit 0
 	fi
 
@@ -176,6 +179,7 @@ function execute_combination() {
     tmux send-keys -t "$session_name" "cd $workdir" C-m
     tmux send-keys -t "$session_name" "pip install -r $basedir/nerf-project/utils/llff/requirements.txt" C-m
     tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $workdir/ --model_path $largest_folder" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/img_check.py $workdir/images view_imgs.txt" C-m
 }
 
 
