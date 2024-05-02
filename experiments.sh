@@ -49,7 +49,7 @@ pip install gdown tqdm torch
 video_fovs=("wide" "normal" "record3d")
 
 declare -A gdrive_ids
-gdrive_ids["wide"]="1dPblORqwimPgy-a8OFOeGfiYU79ArDNd"  # set id in google-drive url for video
+gdrive_ids["wide"]="12XlFtxf4JpQLm2-rSihRoNvT5FDxDqf3"  # set id in google-drive url for video
 gdrive_ids["normal"]=""
 gdrive_ids["record3d"]=""
 
