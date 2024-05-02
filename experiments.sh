@@ -95,10 +95,11 @@ function execute_combination() {
 		tmux send-keys -t "$session_name" "alias python=python3" C-m
 		tmux send-keys -t "$session_name" "gdown --id 1sSNwwsCLPOaa8ufcX4S7y4n0fu_1Znt8" C-m
 		tmux send-keys -t "$session_name" "unzip workspace.zip" C-m
-		tmux send-keys -t "$session_name" "cd $ns/record3d" C-m
+		# tmux send-keys -t "$session_name" "cd $ns/record3d" C-m
 		tmux send-keys -t "$session_name" "gdown $gdrive_id" C-m
 		tmux send-keys -t "$session_name" "unzip $fov -d $ns/record3d" C-m
-		tmux send-keys -t "$session_name" "subfolder=$(find "$ns/record3d" -mindepth 1 -maxdepth 1 -type d)" C-m
+		tmux send-keys -t "$session_name" "rm -rf $ns/record3d/__MACOSX" C-m
+		tmux send-keys -t "$session_name" "subfolder=$(find "$ns" -mindepth 1 -maxdepth 1 -type d)" C-m
 		tmux send-keys -t "$session_name" "apt update" C-m
 		tmux send-keys -t "$session_name" "apt install -y build-essential" C-m # gcc컴파일러 설치
 		tmux send-keys -t "$session_name" "pip install nerfstudio" C-m
@@ -114,7 +115,7 @@ function execute_combination() {
 		tmux send-keys -t "$session_name" "export PYTHONPATH=\"$ns/:$PYTHONPATH\"" C-m
 
 		tmux send-keys -t "$session_name" "python record3d_adjust_colmap.py" C-m
-		tmux send-keys -t "$session_name" "python $basedir/nerf-project/llff/colmap2poses.py --project_path $ns/ --model_path comap_ba" C-m
+		tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/llff/colmap2poses.py --project_path $ns/ --model_path comap_ba" C-m
 
 		exit 0
 	fi
@@ -124,14 +125,15 @@ function execute_combination() {
     tmux send-keys -t "$session_name" "sleep 2" C-m
     tmux send-keys -t "$session_name" "mkdir -p $workdir && cd $workdir" C-m
     tmux send-keys -t "$session_name" "mkdir -p $workdir/images" C-m
-    tmux send-keys -t "$session_name" "mkdir -p $workdir/videos" C-m
+    #tmux send-keys -t "$session_name" "mkdir -p $workdir/videos" C-m
     tmux send-keys -t "$session_name" "gdown ${gdrive_id}" C-m
-    tmux send-keys -t "$session_name" "unzip $fov -d $workdir/videos" C-m
-    tmux send-keys -t "$session_name" "subfolder=$(find "$workdir" -mindepth 1 -maxdepth 1 -type d)" C-m
-    tmux send-keys -t "$session_name" "mv $subfolder/* $workdir/videos" C-m
-    tmux send-keys -t "$session_name" "rm -rf $subfolder" C-m
+    tmux send-keys -t "$session_name" "unzip $fov" C-m
+    #tmux send-keys -t "$session_name" "unzip $fov -d $workdir/videos" C-m
+    #tmux send-keys -t "$session_name" "subfolder=$(find "$workdir" -mindepth 1 -maxdepth 1 -type d)" C-m
+    #tmux send-keys -t "$session_name" "mv $subfolder/* $workdir/videos" C-m
+    #tmux send-keys -t "$session_name" "rm -rf $subfolder" C-m
     tmux send-keys -t "$session_name" "alias python=python3" C-m
-    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/videos/*" C-m
+    tmux send-keys -t "$session_name" "python $basedir/nerf-project/utils/preprocess/multiple_video_sample_tqdm_jpg.py $fps $workdir/images $workdir/$fov/*" C-m
 
 
 
